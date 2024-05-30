@@ -3,12 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amplify S3 Visualization</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Stock Analysis</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Data Visualization from S3</h1>
-    <canvas id="myChart" width="400" height="400"></canvas>
-    <script src="index.js"></script>
+    <header>
+        <h1>Stock Analysis Dashboard</h1>
+    </header>
+    <main>
+        <section class="dropdown">
+            <label for="stock-select">Choose a stock:</label>
+            <select id="stock-select">
+                <option value="company1">Company 1</option>
+                <option value="company2">Company 2</option>
+                <option value="company3">Company 3</option>
+                <!-- Add more options as needed -->
+            </select>
+        </section>
+        <section class="chart">
+            <div id="chart-container">
+                <!-- Chart will be displayed here -->
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>© 2024 Stock Analysis Inc.</p>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
