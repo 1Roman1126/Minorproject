@@ -7,6 +7,7 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
+AWS.config.logger = console; // Enable detailed AWS SDK logging to console
 
 document.addEventListener('DOMContentLoaded', function () {
     const stockSelect = document.getElementById('stock-select');
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chartContainer.innerHTML = ''; // Clear existing chart/data
             renderChart(data); // Render the chart with the fetched data
         } catch (error) {
-            chartContainer.innerHTML = `<p>Error loading data for ${stock}</p>`;
+            chartContainer.innerHTML = `<p>Error loading data for ${stock}: ${error.message}</p>`;
             console.error('Error fetching or parsing CSV:', error);
         }
     }
@@ -50,12 +51,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return new Promise((resolve, reject) => {
             s3.getObject(params, function(err, data) {
                 if (err) {
-                    reject(err);
+                    console.error('S3 getObject Error:', err);
+                    reject(new Error(`Failed to fetch ${key} from S3: ${err.message}`));
                 } else {
                     Papa.parse(data.Body.toString(), {
                         header: true,
                         complete: function(results) {
-                            resolve(results.data);
+                            if (results.errors.length) {
+                                console.error('Papa Parse Errors:', results.errors);
+                                reject(new Error('Errors occurred while parsing CSV.'));
+                            } else {
+                                resolve(results.data);
+                            }
                         }
                     });
                 }
@@ -92,4 +99,3 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize with the first stock selected
     updateChart(stockSelect.value);
 });
-
