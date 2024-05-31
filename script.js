@@ -9,107 +9,127 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 document.addEventListener('DOMContentLoaded', function () {
-    const stockSelect = document.getElementById('stock-select');
-    const chartContainer = document.getElementById('chart-container');
-
-    stockSelect.addEventListener('change', function () {
-        const selectedStock = stockSelect.value;
-        updateChart(selectedStock);
+    fetchCsv('nepse_data_2024-05-30.csv').then(data => {
+        createPriceChart(data);
+        createTradeChart(data);
+        createMarketChart(data);
+    }).catch(error => {
+        console.error('Error fetching or parsing CSV:', error);
     });
+});
 
-    async function updateChart(stock) {
-        try {
-            const data = await fetchCsv(stock);
-            chartContainer.innerHTML = ''; // Clear existing chart/data
-            renderChart(data); // Render the chart with the fetched data
-        } catch (error) {
-            chartContainer.innerHTML = `<p>Error loading data for ${stock}: ${error.message}</p>`;
-            console.error('Error fetching or parsing CSV:', error);
-        }
-    }
+function fetchCsv(key) {
+    const params = {
+        Bucket: 'minorproject-forbes',
+        Key: key
+    };
 
-    function fetchCsv(stock) {
-        let key = '';
-        switch (stock) {
-            case 'company1':
-                key = 'nepse_data_2024-05-30.csv';
-                break;
-            case 'company2':
-                key = 'Today\'s Price_2024-05-15.csv';
-                break;
-            default:
-                key = 'manifest.json'; // Default case, or handle appropriately
-                break;
-        }
-
-        const params = {
-            Bucket: 'minorproject-forbes', // Your S3 bucket name
-            Key: key
-        };
-
-        return new Promise((resolve, reject) => {
-            s3.getObject(params, function(err, data) {
-                if (err) {
-                    console.error('Error fetching from S3:', err);
-                    reject(new Error(`Failed to fetch ${key} from S3: ${err.message}`));
-                } else {
-                    // Ensure correct encoding and handle potential BOM
-                    const csvData = new TextDecoder("utf-8").decode(data.Body).replace(/^\uFEFF/, '');
-                    Papa.parse(csvData, {
-                        header: true,
-                        dynamicTyping: true,
-                        skipEmptyLines: true,
-                        trimHeaders: true,
-                        transform: value => value.trim(),
-                        complete: function(results) {
-                            if (results.errors.length > 0) {
-                                const criticalErrors = results.errors.filter(error => error.code !== "TooManyFields");
-                                if (criticalErrors.length > 0) {
-                                    reject(new Error(`Critical parsing errors: ${criticalErrors.map(err => `${err.message} at row ${err.row}`).join(', ')}`));
-                                } else {
-                                    resolve(results.data); // Resolve with data even if non-critical errors exist
-                                }
-                            } else {
-                                resolve(results.data);
-                            }
-                        },
-                        error: function(err) {
-                            console.error('Papa Parse Parsing Error:', err);
-                            reject(new Error(`Parsing error: ${err.message}`));
-                        },
-                        relaxColumnCount: true
-                    });
-                }
-            });
-        });
-    }
-
-    function renderChart(data) {
-        const ctx = document.createElement('canvas');
-        chartContainer.appendChild(ctx);
-
-        new Chart(ctx, {
-            type: 'line', // Change this to 'bar', 'pie', etc. based on your preference
-            data: {
-                labels: data.map(item => item.Date), // Make sure 'Date' matches your CSV column name
-                datasets: [{
-                    label: 'Stock Price',
-                    data: data.map(item => item.Price), // Make sure 'Price' matches your CSV column name
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: false
-                    }
-                }
+    return new Promise((resolve, reject) => {
+        s3.getObject(params, function(err, data) {
+            if (err) {
+                reject(new Error(`Failed to fetch ${key} from S3: ${err.message}`));
+            } else {
+                const csvData = new TextDecoder("utf-8").decode(data.Body).replace(/^\uFEFF/, '');
+                Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: results => resolve(results.data),
+                    error: err => reject(new Error(`Parsing error: ${err.message}`))
+                });
             }
         });
-    }
+    });
+}
 
-    // Initialize with the first stock selected
-    updateChart(stockSelect.value);
-});
+function createPriceChart(data) {
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(item => item.SECURITY_NAME),
+            datasets: [{
+                label: 'Open Price',
+                data: data.map(item => item.OPEN_PRICE),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'High Price',
+                data: data.map(item => item.HIGH_PRICE),
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }, {
+                label: 'Low Price',
+                data: data.map(item => item.LOW_PRICE),
+                borderColor: 'rgb(255, 205, 86)',
+                tension: 0.1
+            }, {
+                label: 'Close Price',
+                data: data.map(item => item.CLOSE_PRICE),
+                borderColor: 'rgb(201, 203, 207)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+function createTradeChart(data) {
+    const ctx = document.getElementById('tradeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.SECURITY_NAME),
+            datasets: [{
+                label: 'Total Traded Quantity',
+                data: data.map(item => item.TOTAL_TRADED_QUANTITY),
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Total Trades',
+                data: data.map(item => item.TOTAL_TRADES),
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function createMarketChart(data) {
+    const ctx = document.getElementById('marketChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.SECURITY_NAME),
+            datasets: [{
+                label: 'Market Capitalization',
+                data: data.map(item => item.MARKET_CAPITALIZATION),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
