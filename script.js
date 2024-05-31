@@ -1,6 +1,6 @@
 // AWS SDK Configuration
 AWS.config.update({
-    region: 'us-east-1', 
+    region: 'us-east-1',
     credentials: new AWS.CognitoIdentityCredentials({
         IdentityPoolId: 'us-east-1:8059f8ce-6b06-4913-96aa-c63ce3cda46e'
     })
@@ -59,10 +59,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         header: true,
                         dynamicTyping: true,
                         skipEmptyLines: true,
+                        trimHeaders: true,
+                        transform: value => value.trim(),
                         complete: function(results) {
                             if (results.errors.length > 0) {
-                                console.error('Papa Parse Errors:', results.errors);
-                                reject(new Error(`Errors occurred while parsing CSV: ${results.errors.map(err => err.message).join(', ')}`));
+                                const criticalErrors = results.errors.filter(error => error.code !== "TooManyFields");
+                                if (criticalErrors.length > 0) {
+                                    reject(new Error(`Critical parsing errors: ${criticalErrors.map(err => `${err.message} at row ${err.row}`).join(', ')}`));
+                                } else {
+                                    resolve(results.data); // Resolve with data even if non-critical errors exist
+                                }
                             } else {
                                 resolve(results.data);
                             }
@@ -70,7 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         error: function(err) {
                             console.error('Papa Parse Parsing Error:', err);
                             reject(new Error(`Parsing error: ${err.message}`));
-                        }
+                        },
+                        relaxColumnCount: true
                     });
                 }
             });
