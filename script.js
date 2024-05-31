@@ -7,7 +7,6 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-AWS.config.logger = console; // Enable detailed AWS SDK logging to console
 
 document.addEventListener('DOMContentLoaded', function () {
     const stockSelect = document.getElementById('stock-select');
@@ -51,18 +50,26 @@ document.addEventListener('DOMContentLoaded', function () {
         return new Promise((resolve, reject) => {
             s3.getObject(params, function(err, data) {
                 if (err) {
-                    console.error('S3 getObject Error:', err);
+                    console.error('Error fetching from S3:', err);
                     reject(new Error(`Failed to fetch ${key} from S3: ${err.message}`));
                 } else {
-                    Papa.parse(data.Body.toString(), {
+                    // Ensure correct encoding and handle potential BOM
+                    const csvData = new TextDecoder("utf-8").decode(data.Body).replace(/^\uFEFF/, '');
+                    Papa.parse(csvData, {
                         header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
                         complete: function(results) {
-                            if (results.errors.length) {
+                            if (results.errors.length > 0) {
                                 console.error('Papa Parse Errors:', results.errors);
                                 reject(new Error('Errors occurred while parsing CSV.'));
                             } else {
                                 resolve(results.data);
                             }
+                        },
+                        error: function(err) {
+                            console.error('Papa Parse Parsing Error:', err);
+                            reject(new Error(`Parsing error: ${err.message}`));
                         }
                     });
                 }
