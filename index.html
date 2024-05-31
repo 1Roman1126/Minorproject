@@ -3,39 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Analysis Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- AWS SDK -->
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
-    <!-- PapaParse for CSV parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.0.2/papaparse.min.js"></script>
-    <!-- Chart.js for visualizations -->
+    <title>NEPSE Data Visualization</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
-    <header>
-        <h1>Stock Analysis Dashboard</h1>
-    </header>
-    <main>
-        <section class="dropdown">
-            <label for="stock-select">Choose a stock:</label>
-            <select id="stock-select">
-                <option value="company1">Company 1</option>
-                <option value="company2">Company 2</option>
-                <option value="company3">Company3</option>
-                <!-- Add more options as needed -->
-            </select>
-        </section>
-        <section class="chart">
-            <div id="chart-container">
-                <!-- Chart will be displayed here -->
-            </div>
-        </section>
-    </main>
-    <footer>
-        <p>© 2024 Stock Analysis Inc.</p>
-    </footer>
-
+    <div id="chart-container">
+        <canvas id="priceChart"></canvas>
+        <canvas id="tradeChart"></canvas>
+        <canvas id="marketChart"></canvas>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
