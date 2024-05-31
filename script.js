@@ -150,3 +150,4 @@ function createMarketChart(data) {
         }
     });
 }
+//update in progress
