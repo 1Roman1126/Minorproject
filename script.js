@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         complete: function(results) {
                             if (results.errors.length > 0) {
                                 console.error('Papa Parse Errors:', results.errors);
-                                reject(new Error('Errors occurred while parsing CSV.'));
+                                reject(new Error(`Errors occurred while parsing CSV: ${results.errors.map(err => err.message).join(', ')}`));
                             } else {
                                 resolve(results.data);
                             }
