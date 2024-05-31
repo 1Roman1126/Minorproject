@@ -1,4 +1,5 @@
 // AWS SDK Configuration
+//yfgdgf
 AWS.config.update({
     region: 'us-east-1',
     credentials: new AWS.CognitoIdentityCredentials({
