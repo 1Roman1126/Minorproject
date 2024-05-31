@@ -9,7 +9,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 document.addEventListener('DOMContentLoaded', function () {
-    fetchCsv('nepse_data_2024-05-30.csv').then(data => {
+    fetchLatestCsv().then(data => {
         createPriceChart(data);
         createTradeChart(data);
         createMarketChart(data);
@@ -17,6 +17,23 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error fetching or parsing CSV:', error);
     });
 });
+
+async function fetchLatestCsv() {
+    let date = new Date();
+    for (let i = 0; i < 7; i++) {  // Try the last 7 days
+        let dateString = date.toISOString().split('T')[0];  // Formats to "YYYY-MM-DD"
+        let key = `nepse_data_${dateString}.csv`;
+        try {
+            const data = await fetchCsv(key);
+            console.log(`Successfully fetched data for ${dateString}`);
+            return data;
+        } catch (error) {
+            console.error(`No data available for ${dateString}:`, error.message);
+            date.setDate(date.getDate() - 1);  // Go to the previous day
+        }
+    }
+    throw new Error('No available CSV files found in the past week.');
+}
 
 function fetchCsv(key) {
     const params = {
