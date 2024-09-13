@@ -3,7 +3,7 @@
 AWS.config.update({
     region: 'us-east-1',
     credentials: new AWS.CognitoIdentityCredentials({
-        IdentityPoolId: 'us-east-1:8059f8ce-6b06-4913-96aa-c63ce3cda46e'
+        IdentityPoolId: 'us-east-1:3c64b487-1e8d-4d08-975c-0a909bcab72f'
     })
 });
 
@@ -38,7 +38,7 @@ async function fetchLatestCsv() {
 
 function fetchCsv(key) {
     const params = {
-        Bucket: 'minorproject-forbes',
+        Bucket: 'nepse-stock-data',
         Key: key
     };
 
